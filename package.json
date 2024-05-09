@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
+    "lint": "eslint \"**/*.ts\"",
+    "lint:fix": "eslint --fix \"src/**/*.ts\"",
     "prepare": "husky",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
@@ -16,6 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neoncoder/service-response": "^0.0.14",
+    "@prisma/client": "^5.13.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2"
@@ -35,6 +39,7 @@
     "lint-staged": "^15.2.2",
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
+    "prisma": "^5.13.0",
     "standard-version": "^9.5.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"

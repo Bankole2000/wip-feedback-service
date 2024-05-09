@@ -12,3 +12,14 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Survey {
+  surveyId         String   @id @default(uuid())
+  name             String?
+  shortDescription String?
+  published        Boolean  @default(false)
+  openingDate      DateTime?
+  closingDate      DateTime?
+  created          DateTime @default(now())
+  updated          DateTime @updatedAt
+}
