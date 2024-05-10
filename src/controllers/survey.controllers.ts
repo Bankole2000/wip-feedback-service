@@ -40,7 +40,7 @@ export const createSurveyHandler = async (req: Request, res: Response) => {
     };
     const { result } = await surveyService.getAllSurveys({ filters });
     if (result?.data?.count) {
-      await surveyService.associateSurveys({ surveyIds: result.data.surveys.map((x: Survey) => x.surveyId) });
+      await surveyService.batchAssociateSurveys({ surveyIds: result.data.surveys.map((x: Survey) => x.surveyId) });
     }
   }
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result, data: surveyService.survey });
@@ -53,13 +53,25 @@ export const updateSurveyHandler = async (req: Request, res: Response) => {
   return res.status(sr.statusCode).send(sr);
 };
 
-export const associateSurveyHandler = async (_: Request, res: Response) => {
-  const sr: ServiceResponse = Rez.OK({ message: "Not yet implemented" });
+export const associateSurveyHandler = async (req: Request, res: Response) => {
+  const { associateSurveyId, surveyId } = req.params;
+  if (associateSurveyId === surveyId) {
+    const sr = Rez.BadRequest({ message: "You cannot link a survey to itself" });
+    return res.status(sr.statusCode).send(sr);
+  }
+  const { result } = await new SurveyService({ survey: res.locals.survey }).associateSurvey({ associateSurveyId });
+  const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
 };
 
-export const dissociateSurveyHandler = async (_: Request, res: Response) => {
-  const sr: ServiceResponse = Rez.OK({ message: "Not yet implemented" });
+export const dissociateSurveyHandler = async (req: Request, res: Response) => {
+  const { associateSurveyId: associatedSurveyId, surveyId } = req.params;
+  if (associatedSurveyId === surveyId) {
+    const sr = Rez.BadRequest({ message: "You cannot unlink a survey from itself" });
+    return res.status(sr.statusCode).send(sr);
+  }
+  const { result } = await new SurveyService({ survey: res.locals.survey }).dissociateSurvey({ associatedSurveyId });
+  const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
 };
 

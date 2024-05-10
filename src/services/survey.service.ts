@@ -114,7 +114,7 @@ export class SurveyService extends PostgresDBService {
     return this;
   }
 
-  async associateSurveys({ surveyIds, id = undefined }: { surveyIds: string[]; id?: string }) {
+  async batchAssociateSurveys({ surveyIds, id = undefined }: { surveyIds: string[]; id?: string }) {
     const surveyId = id ?? this.survey?.surveyId;
     const data: { surveyId: string; associatedSurveyId: string }[] = [];
     surveyIds.forEach((id) => {
@@ -137,6 +137,113 @@ export class SurveyService extends PostgresDBService {
           });
         }
         this.result = statusMap.get(201)!({ message: `${result.count} Surveys associated`, data: this.survey });
+      }
+    } catch (error: any) {
+      this.formatError(error);
+    }
+    return this;
+  }
+
+  async checkSurveyAssociation({
+    associatedSurveyId,
+    id = undefined,
+    bi = false,
+  }: {
+    associatedSurveyId: string;
+    id?: string;
+    bi?: boolean;
+  }) {
+    const surveyId = id ?? this.survey?.surveyId;
+    const filter = bi
+      ? {
+          OR: [
+            { associatedSurveyId, surveyId },
+            { surveyId: associatedSurveyId, associatedSurveyId: surveyId },
+          ],
+        }
+      : { AND: [{ surveyId, associatedSurveyId }] };
+    try {
+      const existingAssociation = await this.prisma.associatedSurvey.findFirst({
+        where: {
+          ...filter,
+        },
+      });
+      this.result = existingAssociation
+        ? statusMap.get(200)!({ data: existingAssociation, message: "These surveys are already associated" })
+        : statusMap.get(404)!({ data: null, message: `These surveys are not associated` });
+    } catch (error: any) {
+      this.formatError(error);
+    }
+    return this;
+  }
+
+  async associateSurvey({ associateSurveyId, id = undefined }: { associateSurveyId: string; id?: string }) {
+    const surveyId = id ?? this.survey?.surveyId;
+    try {
+      const { result: check } = await this.checkSurveyAssociation({
+        associatedSurveyId: associateSurveyId,
+        id: surveyId,
+      });
+      if (check?.statusType !== "OK") {
+        await this.prisma.associatedSurvey.create({
+          data: {
+            surveyId: surveyId as string,
+            associatedSurveyId: associateSurveyId,
+          },
+        });
+        if (!id) {
+          this.survey = await this.prisma.survey.findUnique({
+            where: { surveyId },
+            include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+          });
+          await this.getAssociatedSurveys({});
+        }
+        this.result!.message = "Surveys are now associated";
+      }
+    } catch (error: any) {
+      this.formatError(error);
+    }
+    return this;
+  }
+
+  async dissociateSurvey({
+    associatedSurveyId,
+    id = undefined,
+    bi = false,
+  }: {
+    associatedSurveyId: string;
+    id?: string;
+    bi?: boolean;
+  }) {
+    const surveyId = id ?? this.survey?.surveyId;
+    try {
+      const { result: check } = await this.checkSurveyAssociation({
+        associatedSurveyId,
+        id: surveyId,
+        bi,
+      });
+      if (check?.statusType === "OK") {
+        const filter = bi
+          ? {
+              OR: [
+                { associatedSurveyId, surveyId },
+                { surveyId: associatedSurveyId, associatedSurveyId: surveyId },
+              ],
+            }
+          : { AND: [{ surveyId, associatedSurveyId }] };
+        await this.prisma.associatedSurvey.deleteMany({
+          where: {
+            ...filter,
+          },
+        });
+        if (!id) {
+          this.survey = await this.prisma.survey.findUnique({
+            where: { surveyId },
+            include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+          });
+          await this.getAssociatedSurveys({});
+        }
+        this.result!.message = "Surveys are no longer associated";
       }
     } catch (error: any) {
       this.formatError(error);
@@ -168,6 +275,9 @@ export class SurveyService extends PostgresDBService {
         include: {
           survey: true,
           associatedSurvey: true,
+        },
+        orderBy: {
+          created: "desc",
         },
       });
       const data: Survey[] = associatedSurveys.map((x) => (x.surveyId === surveyId ? x.associatedSurvey : x.survey));

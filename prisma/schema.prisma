@@ -25,7 +25,7 @@ model Survey {
   feedbackGiverSurveyThreshold      Int?               @default(3)
   responsePerQuestionnaireThreshold Int?               @default(3)
   requiresSelfAssessment            Boolean?           @default(false)
-  reportType                        ReportType?        @default(INDIVIDUAL) 
+  reportType                        ReportType?        @default(INDIVIDUAL)
   associatedSurveys                 AssociatedSurvey[] @relation("HasAssociatedSurveys")
   isAssociatedWithSurveys           AssociatedSurvey[] @relation("IsAssociatedWithSurvey")
   published                         Boolean?           @default(false)
@@ -43,8 +43,9 @@ enum ReportType {
 model AssociatedSurvey {
   surveyId           String
   associatedSurveyId String
-  survey             Survey @relation("HasAssociatedSurveys", fields: [surveyId], references: [surveyId], onDelete: Cascade)
-  associatedSurvey   Survey @relation("IsAssociatedWithSurvey", fields: [associatedSurveyId], references: [surveyId], onDelete: Cascade)
+  survey             Survey   @relation("HasAssociatedSurveys", fields: [surveyId], references: [surveyId], onDelete: Cascade)
+  associatedSurvey   Survey   @relation("IsAssociatedWithSurvey", fields: [associatedSurveyId], references: [surveyId], onDelete: Cascade)
+  created            DateTime @default(now())
 
   @@id([surveyId, associatedSurveyId])
 }
