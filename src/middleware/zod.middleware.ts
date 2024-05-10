@@ -12,10 +12,18 @@ export const validate =
       });
       return next();
     } catch (error: any) {
+      console.log({ error: error["issues"] });
+      let message: string;
+      if (error["issues"]) {
+        const path: string[] = error["issues"][0]["path"];
+        message = `${path.length > 1 ? path[path.length - 1] : "Error"} - ${error["issues"][0]["message"]}`;
+      } else {
+        message = JSON.parse(error).message;
+      }
+      const errorFormat = { ...error, message };
       const sr = BadRequest({
         message: `${schemaName} validation failed`,
-        errMessage: error.message,
-        error,
+        error: errorFormat,
       });
       return res.status(sr.statusCode).send(sr);
     }

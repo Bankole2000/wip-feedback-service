@@ -62,8 +62,8 @@ export class SurveyService extends PostgresDBService {
     return this;
   }
 
-  async createSurvey(newSurveyData: any) {
-    const data = this.sanitize(this.fields, newSurveyData);
+  async createSurvey({ surveyData }: { surveyData: Prisma.SurveyCreateInput }) {
+    const data = this.sanitize(this.fields, surveyData);
     try {
       this.survey = await this.prisma.survey.create({
         data,
@@ -114,7 +114,7 @@ export class SurveyService extends PostgresDBService {
     return this;
   }
 
-  async associateSurveys(surveyIds: string[], id?: string) {
+  async associateSurveys({ surveyIds, id = undefined }: { surveyIds: string[]; id?: string }) {
     const surveyId = id ?? this.survey?.surveyId;
     const data: { surveyId: string; associatedSurveyId: string }[] = [];
     surveyIds.forEach((id) => {
@@ -155,11 +155,12 @@ export class SurveyService extends PostgresDBService {
   }) {
     const surveyId = id ?? this.survey!.surveyId;
     const filter = bi
-      ? { OR: [{ surveyId }, { associateSurveyId: surveyId }] }
+      ? { OR: [{ surveyId }, { associatedSurveyId: surveyId }] }
       : reverse
         ? { associatedSurveyId: surveyId }
         : { surveyId };
     try {
+      console.log({ filter });
       const associatedSurveys = await this.prisma.associatedSurvey.findMany({
         where: {
           ...filter,
@@ -186,6 +187,29 @@ export class SurveyService extends PostgresDBService {
       });
       this.survey = null;
       this.result = statusMap.get(201)!({ data: deletedSurvey, message: `Survey deleted` });
+    } catch (error: any) {
+      this.formatError(error);
+    }
+    return this;
+  }
+
+  async getAllSurveys({
+    filters,
+    orderBy = { updated: "desc" },
+  }: {
+    filters?: Prisma.SurveyWhereInput;
+    orderBy?: Prisma.SurveyOrderByWithRelationInput | Prisma.SurveyOrderByWithRelationInput[] | undefined;
+  }) {
+    try {
+      const [surveys, count] = await this.prisma.$transaction([
+        this.prisma.survey.findMany({
+          where: { ...filters },
+          orderBy,
+          include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+        }),
+        this.prisma.survey.count({ where: { ...filters } }),
+      ]);
+      this.result = statusMap.get(200)!({ data: { surveys, count } });
     } catch (error: any) {
       this.formatError(error);
     }

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Rez, ServiceResponse } from "@neoncoder/service-response";
 import { SurveyService } from "../services/survey.service";
-import { Prisma } from "@prisma/client";
+import { Prisma, Survey } from "@prisma/client";
 
 export const getSurveysHandler = async (req: Request, res: Response) => {
   const limit = parseInt(req.query.limit as string, 10) ? parseInt(req.query.limit as string, 10) : 25;
@@ -16,8 +16,13 @@ export const getSurveysHandler = async (req: Request, res: Response) => {
 };
 
 export const getSurveyDetailsHandler = async (req: Request, res: Response) => {
-  const result = (await new SurveyService({ survey: res.locals.survey }).getAssociatedSurveys({})).result;
-  const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
+  const reverse = req.query.reverse === "true";
+  const bi = req.query.bi === "true";
+  const { survey, result } = await new SurveyService({ survey: res.locals.survey }).getAssociatedSurveys({
+    reverse,
+    bi,
+  });
+  const sr: ServiceResponse = Rez[result!.statusType]({ ...result, data: survey });
   return res.status(sr.statusCode).send(sr);
 };
 
@@ -26,8 +31,19 @@ export const createSurveyHandler = async (req: Request, res: Response) => {
   const surveyData = req.body;
   surveyData.creatorUserId = authUserId;
   if (!surveyData.clientUserId) surveyData.clientUserId = authUserId;
-  const result = (await new SurveyService({}).createSurvey(surveyData)).result;
-  const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
+  const surveyService = new SurveyService({});
+  const { result } = await surveyService.createSurvey({ surveyData });
+  if (surveyData.associatedSurveys && Array.isArray(surveyData.associatedSurveys) && !result?.error) {
+    const notSelf: string[] = surveyData.associatedSurveys.filter((x: string) => surveyService.survey?.surveyId !== x);
+    const filters = {
+      AND: [{ surveyId: { in: notSelf } }, { OR: [{ creatorUserId: authUserId }, { clientUserId: authUserId }] }],
+    };
+    const { result } = await surveyService.getAllSurveys({ filters });
+    if (result?.data?.count) {
+      await surveyService.associateSurveys({ surveyIds: result.data.surveys.map((x: Survey) => x.surveyId) });
+    }
+  }
+  const sr: ServiceResponse = Rez[result!.statusType]({ ...result, data: surveyService.survey });
   return res.status(sr.statusCode).send(sr);
 };
 
@@ -37,7 +53,17 @@ export const updateSurveyHandler = async (req: Request, res: Response) => {
   return res.status(sr.statusCode).send(sr);
 };
 
-export const deleteSurveyHandler = async (req: Request, res: Response) => {
+export const associateSurveyHandler = async (_: Request, res: Response) => {
+  const sr: ServiceResponse = Rez.OK({ message: "Not yet implemented" });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const dissociateSurveyHandler = async (_: Request, res: Response) => {
+  const sr: ServiceResponse = Rez.OK({ message: "Not yet implemented" });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const deleteSurveyHandler = async (_: Request, res: Response) => {
   const result = (await new SurveyService({ survey: res.locals.survey }).deleteSurvey({})).result;
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
@@ -50,5 +76,20 @@ export const checkSurveyExists = async (req: Request, res: Response, next: NextF
     return res.status(sr.statusCode).send(sr);
   }
   res.locals.survey = survey;
+  return next();
+};
+
+export const checkAssociateSurveyExists = async (
+  _: Request,
+  res: Response,
+  next: NextFunction,
+  associateSurveyId: string,
+) => {
+  const { survey, result } = await new SurveyService({}).getSurveyById({ id: associateSurveyId });
+  if (!survey) {
+    const sr: ServiceResponse = Rez[result!.statusType]({ ...result, message: "Survey to associate not found" });
+    return res.status(sr.statusCode).send(sr);
+  }
+  res.locals.associateSurvey = survey;
   return next();
 };

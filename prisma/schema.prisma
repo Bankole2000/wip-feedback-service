@@ -43,8 +43,8 @@ enum ReportType {
 model AssociatedSurvey {
   surveyId           String
   associatedSurveyId String
-  survey             Survey @relation("HasAssociatedSurveys", fields: [surveyId], references: [surveyId])
-  associatedSurvey   Survey @relation("IsAssociatedWithSurvey", fields: [associatedSurveyId], references: [surveyId])
+  survey             Survey @relation("HasAssociatedSurveys", fields: [surveyId], references: [surveyId], onDelete: Cascade)
+  associatedSurvey   Survey @relation("IsAssociatedWithSurvey", fields: [associatedSurveyId], references: [surveyId], onDelete: Cascade)
 
   @@id([surveyId, associatedSurveyId])
 }
