@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon",
+    "build": "npm run migrate:deploy && tsc --build",
+    "migrate:deploy": "prisma migrate deploy",
     "lint": "eslint \"**/*.ts\"",
     "lint:fix": "eslint --fix \"src/**/*.ts\"",
     "prepare": "husky",
@@ -19,10 +21,12 @@
   "license": "ISC",
   "dependencies": {
     "@neoncoder/service-response": "^0.0.14",
+    "@neoncoder/validator-utils": "^0.0.5",
     "@prisma/client": "^5.13.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",

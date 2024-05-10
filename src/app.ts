@@ -4,18 +4,17 @@ import cors from "cors";
 
 import { surveyRoutes } from "./routes/surveyRoutes";
 import { notFoundHandler } from "./controllers/default.controllers";
-import { getProxyRequestMetadata } from "./middleware/proxy.middleware";
+import { getProxyRequestMetadata, requireUserRoles } from "./middleware/proxy.middleware";
+import { adminRoutes } from "./routes/adminRoutes";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(getProxyRequestMetadata);
 
-app.get("/v1/surveys", async (_: Request, res: Response) => {
-  res.status(200).send({ message: "Hi from the survey service" });
-});
-
-app.use("/v1/surveys", getProxyRequestMetadata, surveyRoutes);
+app.use("/v1/surveys", surveyRoutes);
+app.use("/v1/surveys/admin", requireUserRoles({ roles: ["admin"] }), adminRoutes);
 
 app.get("/health", async (_: Request, res: Response) => {
   const sr: ServiceResponse = OK({});

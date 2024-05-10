@@ -14,12 +14,37 @@ datasource db {
 }
 
 model Survey {
-  surveyId         String   @id @default(uuid())
-  name             String?
-  shortDescription String?
-  published        Boolean  @default(false)
-  openingDate      DateTime?
-  closingDate      DateTime?
-  created          DateTime @default(now())
-  updated          DateTime @updatedAt
+  surveyId                          String             @id @default(uuid())
+  name                              String?
+  shortDesc                         String?
+  creatorUserId                     String?
+  clientUserId                      String?
+  hasRequestFeedbackEnabled         Boolean?           @default(false)
+  hasProvideFeedbackEnabled         Boolean?           @default(false)
+  canViewParticipants               Boolean?           @default(false)
+  feedbackGiverSurveyThreshold      Int?               @default(3)
+  responsePerQuestionnaireThreshold Int?               @default(3)
+  requiresSelfAssessment            Boolean?           @default(false)
+  reportType                        ReportType?        @default(INDIVIDUAL) 
+  associatedSurveys                 AssociatedSurvey[] @relation("HasAssociatedSurveys")
+  isAssociatedWithSurveys           AssociatedSurvey[] @relation("IsAssociatedWithSurvey")
+  published                         Boolean?           @default(false)
+  openingDate                       DateTime?
+  closingDate                       DateTime?
+  created                           DateTime           @default(now())
+  updated                           DateTime           @updatedAt
+}
+
+enum ReportType {
+  INDIVIDUAL
+  ORGANIZATION
+}
+
+model AssociatedSurvey {
+  surveyId           String
+  associatedSurveyId String
+  survey             Survey @relation("HasAssociatedSurveys", fields: [surveyId], references: [surveyId])
+  associatedSurvey   Survey @relation("IsAssociatedWithSurvey", fields: [associatedSurveyId], references: [surveyId])
+
+  @@id([surveyId, associatedSurveyId])
 }
