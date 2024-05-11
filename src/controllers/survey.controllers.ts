@@ -2,14 +2,22 @@ import { Request, Response } from "express";
 import { Rez, ServiceResponse } from "@neoncoder/service-response";
 import { SurveyService } from "../services/survey.service";
 import { Prisma, Survey } from "@prisma/client";
-import { isNotEmpty, isValidDate } from "@neoncoder/validator-utils";
+import { isNotEmpty } from "@neoncoder/validator-utils";
 
 export const getSurveysHandler = async (req: Request, res: Response) => {
   const limit = parseInt(req.query.limit as string, 10) ? parseInt(req.query.limit as string, 10) : 25;
   const page = parseInt(req.query.page as string, 10) ? parseInt(req.query.page as string, 10) : 1;
   const { userID: userId, role } = res.locals.user;
-  const filters =
+  let filters: Prisma.SurveyWhereInput | undefined = {};
+  const surveyService = new SurveyService({});
+  const authFilter =
     role === "admin" ? undefined : userId ? { OR: [{ creatorUserId: userId }, { clientUserId: userId }] } : {};
+  if (Object.keys(req.query).length) {
+    const OR: { [key: string]: any }[] = surveyService.buildQueryFilters(req.query, role === "admin");
+    filters.AND = authFilter ? [...OR, authFilter] : [...OR];
+  } else {
+    filters = authFilter;
+  }
   const orderBy = { updated: "desc" as Prisma.SortOrder };
   const query = { page, limit, filters, orderBy };
   const result = await new SurveyService({}).getSurveys(query).then((SS) => SS.result);
@@ -32,29 +40,8 @@ export const searchSurveysHandler = async (req: Request, res: Response) => {
   const { q } = req.query;
   const { userID: userId, role } = res.locals.user;
   const filters: Prisma.SurveyWhereInput | undefined = {};
-  const OR: { [key: string]: any }[] = [];
   const surveyService = new SurveyService({});
-  for (const key in req.query) {
-    if (![...surveyService.fields, "created", "updated"].includes(key)) continue;
-    if (key === "q") continue;
-    if (["true", "false"].includes(String(req.query[key]))) {
-      OR.push({ [key]: String(req.query[key]) === "true" });
-      continue;
-    }
-    if ((key === "clientUserId" || key === "creatorUserId") && role === "admin") {
-      OR.push({ [key]: String(req.query[key]) });
-      continue;
-    }
-    if (["created", "updated", "openingDate", "closingDate"].includes(key)) {
-      const data = String(req.query[key]);
-      const bf = data.charAt(0) === "-";
-      if (isValidDate(bf ? data.substring(1) : data)) {
-        bf ? OR.push({ [key]: { lte: new Date(data.substring(1)) } }) : OR.push({ [key]: { gte: new Date(data) } });
-        continue;
-      }
-    }
-    OR.push({ [key]: req.query[key] });
-  }
+  const OR: { [key: string]: any }[] = surveyService.buildQueryFilters(req.query, role === "admin");
   if (role !== "admin") OR.push({ OR: [{ creatorUserId: userId }, { clientUserId: userId }] });
   if (q && isNotEmpty(String(q))) {
     filters.AND = [

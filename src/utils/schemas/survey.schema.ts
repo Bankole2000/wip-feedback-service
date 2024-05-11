@@ -96,10 +96,9 @@ export const searchSurveysSchema = object({
     canViewParticipants: string()
       .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
       .optional(),
-    requiresSelfAssessment: string().refine(
-      (data) => ["true", "false"].includes(data),
-      "Must be either 'true' or 'false'",
-    ),
+    requiresSelfAssessment: string()
+      .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
+      .optional(),
     reportType: string()
       .refine(
         (data) => ["INDIVIDUAL", "ORGANIZATION"].includes(data),

@@ -1,6 +1,7 @@
 import { statusMap } from "@neoncoder/service-response";
 import { PrismaClient, Survey, Prisma } from "@prisma/client";
 import { PostgresDBService } from "./common.service";
+import { isValidDate } from "@neoncoder/validator-utils";
 
 // TODO: Refactor - survey associations should be in their own DBAL Class extending this one
 
@@ -270,7 +271,10 @@ export class SurveyService extends PostgresDBService {
         return true;
       });
       if (this.survey) this.survey.associatedSurveys = data;
-      this.result = statusMap.get(200)!({ data, message: "Associated Surveys" });
+      this.result = statusMap.get(200)!({
+        data: { survey: this.survey, meta: { reverse, bi } },
+        message: "Associated Surveys",
+      });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -312,5 +316,31 @@ export class SurveyService extends PostgresDBService {
       this.formatError(error);
     }
     return this;
+  }
+
+  buildQueryFilters(query: any, isAdmin = false) {
+    const OR: { [key: string]: any }[] = [];
+    for (const key in query) {
+      if (![...this.fields, "created", "updated"].includes(key)) continue;
+      if (key === "q") continue;
+      if (["true", "false"].includes(String(query[key]))) {
+        OR.push({ [key]: String(query[key]) === "true" });
+        continue;
+      }
+      if ((key === "clientUserId" || key === "creatorUserId") && isAdmin) {
+        OR.push({ [key]: String(query[key]) });
+        continue;
+      }
+      if (["created", "updated", "openingDate", "closingDate"].includes(key)) {
+        const data = String(query[key]);
+        const bf = data.charAt(0) === "-";
+        if (isValidDate(bf ? data.substring(1) : data)) {
+          bf ? OR.push({ [key]: { lte: new Date(data.substring(1)) } }) : OR.push({ [key]: { gte: new Date(data) } });
+          continue;
+        }
+      }
+      OR.push({ [key]: query[key] });
+    }
+    return OR;
   }
 }
