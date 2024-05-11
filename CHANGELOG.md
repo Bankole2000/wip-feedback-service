@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.4](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.3...v0.0.4) (2024-05-11)
+
+
+### 🐛 Bug Fixes
+
+* fixed proxy auth issue ([53c00f8](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/53c00f8f4fbbfa9ea75c6aba4ede5c0dec8e177c))
+
+
+### ✨Features
+
+* add and remove survey assocation endpoints ([6d6a7ff](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/6d6a7ffa270aebf03cdcb0e6a71546e9eb71843c))
+* associate survey on create ([12bcc53](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/12bcc53780d56f6210c69df2af17e9694716c7d4))
+* create survey wip ([acb63df](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/acb63df15516b8329dd155d64f081d4a047868c3))
+* paginated filteraton ([4f5ce75](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/4f5ce7599b6d65c0fd068d4b66c56e9709cec358))
+* time base search ([ecc8684](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/ecc868440f058898f19a897d2e098a57c23291a9))
+
 ### [0.0.3](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.2...v0.0.3) (2024-05-07)
 
 

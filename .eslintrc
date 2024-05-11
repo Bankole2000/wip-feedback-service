@@ -16,7 +16,8 @@
       "warn",
       {
         "singleQuote": false,
-        "semi": true
+        "semi": true,
+        "parser": "typescript"
       }
     ],
   }
