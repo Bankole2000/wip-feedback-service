@@ -1,7 +1,7 @@
-import { isNotEmpty, isValidDate, isValidObjectId } from "@neoncoder/validator-utils";
+import { isNotEmpty, isValidDate /* isValidObjectId */ } from "@neoncoder/validator-utils";
 import { boolean, number, object, string } from "zod";
 
-export const updateSurveyFields = {
+const updateSurveyFields = {
   shortDesc: string({
     required_error: "Survey short description is required",
   })
@@ -11,12 +11,12 @@ export const updateSurveyFields = {
     required_error: "Creator User Id is required",
   })
     .refine((data) => isNotEmpty(data), "Client User Id cannot be empty")
-    .refine((data) => isValidObjectId(data), "Invalid client user Id")
+    // .refine((data) => isValidObjectId(data), "Invalid client user Id")
     .optional(),
   hasRequestFeedbackEnabled: boolean({
     invalid_type_error: "Request Feedback Enabled should be a boolean",
   }).optional(),
-  hasProvideFeedbackEnabled: boolean({
+  hasProviderFeedbackEnabled: boolean({
     invalid_type_error: "Request Feedback Enabled should be a boolean",
   }).optional(),
   canViewParticipants: boolean({
@@ -83,4 +83,53 @@ export const updateSurveySchema = object({
     }
     return true;
   }, "Survey opening time must be before closing time"),
+});
+
+export const searchSurveysSchema = object({
+  query: object({
+    hasRequestFeedbackEnabled: string()
+      .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
+      .optional(),
+    hasProviderFeedbackEnabled: string()
+      .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
+      .optional(),
+    canViewParticipants: string()
+      .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
+      .optional(),
+    requiresSelfAssessment: string().refine(
+      (data) => ["true", "false"].includes(data),
+      "Must be either 'true' or 'false'",
+    ),
+    reportType: string()
+      .refine(
+        (data) => ["INDIVIDUAL", "ORGANIZATION"].includes(data),
+        "report type must be either 'INDIVIDUAL' or 'ORGANIZATION'",
+      )
+      .optional(),
+    published: string()
+      .refine((data) => ["true", "false"].includes(data), "Must be either 'true' or 'false'")
+      .optional(),
+    creatorUserId: string({
+      required_error: "Creator User Id is required",
+    })
+      .refine((data) => isNotEmpty(data), "Creator User Id cannot be empty")
+      .optional(),
+    clientUserId: string({
+      required_error: "Creator User Id is required",
+    })
+      .refine((data) => isNotEmpty(data), "Client User Id cannot be empty")
+      .optional(),
+    openingDate: string()
+      .refine((data) => isValidDate(data.charAt(0) === "-" ? data.substring(1) : data), "Invalid opening date entered")
+      .optional(),
+    closingDate: string()
+      .refine((data) => isValidDate(data.charAt(0) === "-" ? data.substring(1) : data), "Invalid closing date entered")
+      .optional(),
+    created: string()
+      .refine((data) => isValidDate(data.charAt(0) === "-" ? data.substring(1) : data), "Invalid created date entered")
+      .optional(),
+    updated: string()
+      .refine((data) => isValidDate(data.charAt(0) === "-" ? data.substring(1) : data), "Invalid updated date entered")
+      .optional(),
+  }),
 });

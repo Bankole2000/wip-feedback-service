@@ -1,7 +1,15 @@
 import { Router } from "express";
 import { defaultHandler } from "../controllers/default.controllers";
+import { validate } from "../middleware/zod.middleware";
+import { createSurveySchema, searchSurveysSchema, updateSurveySchema } from "../utils/schemas/survey.schema";
+import { requireUserType } from "../middleware/proxy.middleware";
 import {
+  checkAssociateSurveyExists,
   checkSurveyExists,
+  checkUserOwnsAssociateSurvey,
+  checkUserOwnsSurvey,
+} from "../middleware/survey.middleware";
+import {
   createSurveyHandler,
   getSurveysHandler,
   deleteSurveyHandler,
@@ -9,17 +17,14 @@ import {
   getSurveyDetailsHandler,
   associateSurveyHandler,
   dissociateSurveyHandler,
-  checkAssociateSurveyExists,
+  searchSurveysHandler,
 } from "../controllers/survey.controllers";
-import { validate } from "../middleware/zod.middleware";
-import { createSurveySchema, updateSurveySchema } from "../utils/schemas/survey.schema";
-import { checkUserOwnsAssociateSurvey, checkUserOwnsSurvey } from "../middleware/survey.middleware";
-import { requireUserType } from "../middleware/proxy.middleware";
 
 const router = Router({ mergeParams: true });
 
 router.get("/", defaultHandler);
 router.get("/surveys", getSurveysHandler);
+router.get("/search", validate(searchSurveysSchema, "Survey Search"), searchSurveysHandler);
 router.get("/surveys/:surveyId", getSurveyDetailsHandler);
 router.post(
   "/surveys",
@@ -33,8 +38,7 @@ router.patch(
   checkUserOwnsSurvey,
   updateSurveyHandler,
 );
-router.delete("/surveys/:surveyId", checkUserOwnsSurvey, deleteSurveyHandler);
-router.get(
+router.patch(
   "/surveys/:surveyId/associate/:associateSurveyId",
   checkUserOwnsSurvey,
   checkUserOwnsAssociateSurvey,
@@ -46,6 +50,7 @@ router.delete(
   checkUserOwnsAssociateSurvey,
   dissociateSurveyHandler,
 );
+router.delete("/surveys/:surveyId", checkUserOwnsSurvey, deleteSurveyHandler);
 
 router.param("surveyId", checkSurveyExists);
 router.param("associateSurveyId", checkAssociateSurveyExists);

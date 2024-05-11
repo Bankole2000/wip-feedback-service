@@ -17,7 +17,7 @@ app.use("/v1/surveys", requireUserAuth, surveyRoutes);
 app.use("/v1/surveys/admin", requireUserRoles({ roles: ["admin"] }), adminRoutes);
 
 app.get("/health", async (_: Request, res: Response) => {
-  const sr: ServiceResponse = OK({});
+  const sr: ServiceResponse = OK({ message: "OK" });
   return res.status(sr.statusCode).send(sr);
 });
 

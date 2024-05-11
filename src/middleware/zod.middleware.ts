@@ -12,7 +12,6 @@ export const validate =
       });
       return next();
     } catch (error: any) {
-      console.log({ error: error["issues"] });
       let message: string;
       if (error["issues"]) {
         const path: string[] = error["issues"][0]["path"];

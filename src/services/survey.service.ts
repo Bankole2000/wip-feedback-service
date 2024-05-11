@@ -2,6 +2,8 @@ import { statusMap } from "@neoncoder/service-response";
 import { PrismaClient, Survey, Prisma } from "@prisma/client";
 import { PostgresDBService } from "./common.service";
 
+// TODO: Refactor - survey associations should be in their own DBAL Class extending this one
+
 export class SurveyService extends PostgresDBService {
   survey: (Partial<Survey> & { associatedSurveys?: Survey[]; isAssociatedWithSurveys?: Survey[] }) | null;
 
@@ -17,7 +19,7 @@ export class SurveyService extends PostgresDBService {
       "creatorUserId",
       "clientUserId",
       "hasRequestFeedbackEnabled",
-      "hasProvideFeedbackEnabled",
+      "hasProviderFeedbackEnabled",
       "canViewParticipants",
       "feedbackGiverSurveyThreshold",
       "responsePerQuestionnaireThreshold",
@@ -55,7 +57,7 @@ export class SurveyService extends PostgresDBService {
       const prev = pages > 1 && page <= pages && page > 0 ? page - 1 : null;
       const next = pages > 1 && page < pages && page > 0 ? page + 1 : null;
       const data = { surveys, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
-      this.result = statusMap.get(200)!({ data });
+      this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -65,9 +67,7 @@ export class SurveyService extends PostgresDBService {
   async createSurvey({ surveyData }: { surveyData: Prisma.SurveyCreateInput }) {
     const data = this.sanitize(this.fields, surveyData);
     try {
-      this.survey = await this.prisma.survey.create({
-        data,
-      });
+      this.survey = await this.prisma.survey.create({ data });
       this.result = statusMap.get(201)!({ data: this.survey, message: "Survey created" });
     } catch (error: any) {
       this.formatError(error);
@@ -78,19 +78,12 @@ export class SurveyService extends PostgresDBService {
   async getSurveyById({ id }: { id: string }) {
     try {
       this.survey = await this.prisma.survey.findUnique({
-        where: {
-          surveyId: id,
-        },
-        include: {
-          _count: {
-            select: {
-              associatedSurveys: true,
-              isAssociatedWithSurveys: true,
-            },
-          },
-        },
+        where: { surveyId: id },
+        include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
       });
-      this.result = this.survey ? statusMap.get(200)!({ data: this.survey }) : statusMap.get(404)!({});
+      this.result = this.survey
+        ? statusMap.get(200)!({ data: this.survey, message: "OK" })
+        : statusMap.get(404)!({ message: `Survey with id - ${id} - not found` });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -101,12 +94,7 @@ export class SurveyService extends PostgresDBService {
     const surveyId = id ?? this.survey?.surveyId;
     const data = this.sanitize(this.fields, updateData);
     try {
-      this.survey = await this.prisma.survey.update({
-        where: {
-          surveyId,
-        },
-        data,
-      });
+      this.survey = await this.prisma.survey.update({ where: { surveyId }, data });
       this.result = statusMap.get(200)!({ data: this.survey, message: "Survey updated" });
     } catch (error: any) {
       this.formatError(error);
@@ -118,13 +106,11 @@ export class SurveyService extends PostgresDBService {
     const surveyId = id ?? this.survey?.surveyId;
     const data: { surveyId: string; associatedSurveyId: string }[] = [];
     surveyIds.forEach((id) => {
-      if (id !== surveyId) {
-        surveyId ? data.push({ surveyId, associatedSurveyId: id }) : null;
-      }
+      id !== surveyId && surveyId ? data.push({ surveyId, associatedSurveyId: id }) : null;
     });
     try {
       if (!data.length) {
-        this.result = statusMap.get(400)!({});
+        this.result = statusMap.get(400)!({ message: "Invalid survey Ids to associate" });
       } else {
         const result = await this.prisma.associatedSurvey.createMany({
           data,
@@ -163,11 +149,7 @@ export class SurveyService extends PostgresDBService {
         }
       : { AND: [{ surveyId, associatedSurveyId }] };
     try {
-      const existingAssociation = await this.prisma.associatedSurvey.findFirst({
-        where: {
-          ...filter,
-        },
-      });
+      const existingAssociation = await this.prisma.associatedSurvey.findFirst({ where: { ...filter } });
       this.result = existingAssociation
         ? statusMap.get(200)!({ data: existingAssociation, message: "These surveys are already associated" })
         : statusMap.get(404)!({ data: null, message: `These surveys are not associated` });
@@ -267,7 +249,6 @@ export class SurveyService extends PostgresDBService {
         ? { associatedSurveyId: surveyId }
         : { surveyId };
     try {
-      console.log({ filter });
       const associatedSurveys = await this.prisma.associatedSurvey.findMany({
         where: {
           ...filter,
@@ -280,9 +261,16 @@ export class SurveyService extends PostgresDBService {
           created: "desc",
         },
       });
-      const data: Survey[] = associatedSurveys.map((x) => (x.surveyId === surveyId ? x.associatedSurvey : x.survey));
+      const duplicateFilter: { [key: string]: number } = {};
+      let data: Survey[] = associatedSurveys.map((x) => (x.surveyId === surveyId ? x.associatedSurvey : x.survey));
+      [...new Set(data.map((x) => x.surveyId))].forEach((y) => (duplicateFilter[y] = 1));
+      data = data.filter((x) => {
+        if (!duplicateFilter[x.surveyId]) return false;
+        delete duplicateFilter[x.surveyId];
+        return true;
+      });
       if (this.survey) this.survey.associatedSurveys = data;
-      this.result = statusMap.get(200)!({ data });
+      this.result = statusMap.get(200)!({ data, message: "Associated Surveys" });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -319,7 +307,7 @@ export class SurveyService extends PostgresDBService {
         }),
         this.prisma.survey.count({ where: { ...filters } }),
       ]);
-      this.result = statusMap.get(200)!({ data: { surveys, count } });
+      this.result = statusMap.get(200)!({ data: { surveys, count, meta: { filters, orderBy } }, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
     }

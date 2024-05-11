@@ -20,7 +20,7 @@ model Survey {
   creatorUserId                     String?
   clientUserId                      String?
   hasRequestFeedbackEnabled         Boolean?           @default(false)
-  hasProvideFeedbackEnabled         Boolean?           @default(false)
+  hasProviderFeedbackEnabled         Boolean?           @default(false)
   canViewParticipants               Boolean?           @default(false)
   feedbackGiverSurveyThreshold      Int?               @default(3)
   responsePerQuestionnaireThreshold Int?               @default(3)
