@@ -76,7 +76,9 @@ export const createSurveyHandler = async (req: Request, res: Response) => {
     };
     const { result } = await surveyService.getAllSurveys({ filters });
     if (result?.data?.count) {
-      await surveyService.batchAssociateSurveys({ surveyIds: result.data.surveys.map((x: Survey) => x.surveyId) });
+      await surveyService.associationService.batchCreateAssociations({
+        surveyIds: result.data.surveys.map((x: Survey) => x.surveyId),
+      });
     }
   }
   const sr: ServiceResponse = Rez[result!.statusType]({
@@ -99,18 +101,34 @@ export const associateSurveyHandler = async (req: Request, res: Response) => {
     const sr = Rez.BadRequest({ message: "You cannot link a survey to itself" });
     return res.status(sr.statusCode).send(sr);
   }
-  const { result } = await new SurveyService({ survey: res.locals.survey }).associateSurvey({ associateSurveyId });
+  const { result } = await new SurveyService({ survey: res.locals.survey }).associationService.createAssociation({
+    associatedSurveyId: associateSurveyId,
+  });
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
 };
 
 export const dissociateSurveyHandler = async (req: Request, res: Response) => {
+  const { bi } = req.query;
   const { associateSurveyId: associatedSurveyId, surveyId } = req.params;
   if (associatedSurveyId === surveyId) {
     const sr = Rez.BadRequest({ message: "You cannot unlink a survey from itself" });
     return res.status(sr.statusCode).send(sr);
   }
-  const { result } = await new SurveyService({ survey: res.locals.survey }).dissociateSurvey({ associatedSurveyId });
+  const { result } = await new SurveyService({ survey: res.locals.survey }).associationService.deleteSurveyAssociation({
+    bi: bi === "true",
+    associatedSurveyId,
+  });
+  const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const getAssociatedSurveysHandler = async (req: Request, res: Response) => {
+  const { bi, reverse } = req.query;
+  const { result } = await new SurveyService({ survey: res.locals.survey }).associationService.getAllAssociatedSurveys({
+    bi: bi === "true",
+    reverse: reverse === "true",
+  });
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
 };

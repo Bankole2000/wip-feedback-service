@@ -18,12 +18,13 @@ import {
   associateSurveyHandler,
   dissociateSurveyHandler,
   searchSurveysHandler,
+  getAssociatedSurveysHandler,
 } from "../controllers/survey.controllers";
 
 const router = Router({ mergeParams: true });
 
 router.get("/", defaultHandler);
-router.get("/surveys", getSurveysHandler);
+router.get("/surveys", validate(searchSurveysSchema, "Survey Filters"), getSurveysHandler);
 router.get("/search", validate(searchSurveysSchema, "Survey Search"), searchSurveysHandler);
 router.get("/surveys/:surveyId", getSurveyDetailsHandler);
 router.post(
@@ -38,6 +39,7 @@ router.patch(
   checkUserOwnsSurvey,
   updateSurveyHandler,
 );
+router.get("/surveys/:surveyId/associate", checkUserOwnsSurvey, getAssociatedSurveysHandler);
 router.patch(
   "/surveys/:surveyId/associate/:associateSurveyId",
   checkUserOwnsSurvey,

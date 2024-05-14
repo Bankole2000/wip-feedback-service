@@ -25,7 +25,7 @@ export const checkUserOwnsAssociateSurvey = async (_: Request, res: Response, ne
 };
 
 export const checkSurveyExists = async (req: Request, res: Response, next: NextFunction, surveyId: string) => {
-  const { survey, result } = await new SurveyService({}).getSurveyById({ id: surveyId });
+  const { survey, result } = await new SurveyService({}).getSurveyById({ surveyId });
   if (!survey) {
     const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
     return res.status(sr.statusCode).send(sr);
@@ -40,7 +40,7 @@ export const checkAssociateSurveyExists = async (
   next: NextFunction,
   associateSurveyId: string,
 ) => {
-  const { survey, result } = await new SurveyService({}).getSurveyById({ id: associateSurveyId });
+  const { survey, result } = await new SurveyService({}).getSurveyById({ surveyId: associateSurveyId });
   if (!survey) {
     const sr: ServiceResponse = Rez[result!.statusType]({ ...result, message: "Survey to associate not found" });
     return res.status(sr.statusCode).send(sr);
