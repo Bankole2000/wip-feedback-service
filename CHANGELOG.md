@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.5](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.4...v0.0.5) (2024-05-14)
+
+
+### ♻️ Code Refactoring
+
+* single responsibility dbal ([36d3fdb](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/36d3fdb6e7ace8b2f6fbf4e83589a356e2da473d))
+
 ### [0.0.4](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.3...v0.0.4) (2024-05-11)
 
 
