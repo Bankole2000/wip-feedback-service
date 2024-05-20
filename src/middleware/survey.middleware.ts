@@ -1,6 +1,7 @@
 import { Forbidden, Rez, ServiceResponse } from "@neoncoder/service-response";
 import { Request, Response, NextFunction } from "express";
 import { SurveyService } from "../services/survey.service";
+import { SectionService } from "../services/section.service";
 
 export const checkUserOwnsSurvey = async (_: Request, res: Response, next: NextFunction) => {
   const userId = res.locals?.user?.userID;
@@ -46,5 +47,15 @@ export const checkAssociateSurveyExists = async (
     return res.status(sr.statusCode).send(sr);
   }
   res.locals.associateSurvey = survey;
+  return next();
+};
+
+export const checkSectionExists = async (_: Request, res: Response, next: NextFunction, sectionId: string) => {
+  const { section, result } = await new SectionService({}).getSectionDetails({ sectionId });
+  if (!section) {
+    const sr: ServiceResponse = Rez[result!.statusType]({ ...result, message: "Section not found" });
+    return res.status(sr.statusCode).send(sr);
+  }
+  res.locals.section = section;
   return next();
 };

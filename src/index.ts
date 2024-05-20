@@ -1,11 +1,13 @@
 import { app } from "./app";
 import http from "http";
 import { config } from "./configs";
+import { setDefaults } from "./utils/helpers/defaults";
 
 const httpServer = http.createServer(app);
 const PORT = config.app.PORT;
 
 httpServer.listen(PORT, async () => {
+  await setDefaults();
   console.log(`Feedback service listening at ${PORT}`);
 });
 

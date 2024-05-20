@@ -1,0 +1,20 @@
+[
+  {
+    "name"       : "Upward Feedback",
+    "description": "Provide valuable input and suggestions to supervisors and management for organizational improvement",
+    "surveyType" : "UPWARD",
+    "createdByUserId": null
+  },
+  {
+    "name"       : "Peer Feedback",
+    "description": "Exchange constructive insights and observations with colleagues to enhance teamwork, productivity and personal development",
+    "surveyType" : "PEER",
+    "createdByUserId": null
+  },
+  {
+    "name"       : "Self Reporting",
+    "description": "Inspire growth and productivity by encouraging introspection and constructive self assessment.",
+    "surveyType" : "SELF",
+    "createdByUserId": null
+  }
+]

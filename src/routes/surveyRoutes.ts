@@ -3,23 +3,17 @@ import { defaultHandler } from "../controllers/default.controllers";
 import { validate } from "../middleware/zod.middleware";
 import { createSurveySchema, searchSurveysSchema, updateSurveySchema } from "../utils/schemas/survey.schema";
 import { requireUserType } from "../middleware/proxy.middleware";
-import {
-  checkAssociateSurveyExists,
-  checkSurveyExists,
-  checkUserOwnsAssociateSurvey,
-  checkUserOwnsSurvey,
-} from "../middleware/survey.middleware";
+import { checkAssociateSurveyExists, checkSurveyExists, checkUserOwnsSurvey } from "../middleware/survey.middleware";
 import {
   createSurveyHandler,
   getSurveysHandler,
   deleteSurveyHandler,
   updateSurveyHandler,
   getSurveyDetailsHandler,
-  associateSurveyHandler,
-  dissociateSurveyHandler,
   searchSurveysHandler,
-  getAssociatedSurveysHandler,
 } from "../controllers/survey.controllers";
+import { questionnaireRoutes } from "./questionnaireRoutes";
+import { associateSurveyRoutes } from "./associateSurveyRoutes";
 
 const router = Router({ mergeParams: true });
 
@@ -39,19 +33,9 @@ router.patch(
   checkUserOwnsSurvey,
   updateSurveyHandler,
 );
-router.get("/surveys/:surveyId/associate", checkUserOwnsSurvey, getAssociatedSurveysHandler);
-router.patch(
-  "/surveys/:surveyId/associate/:associateSurveyId",
-  checkUserOwnsSurvey,
-  checkUserOwnsAssociateSurvey,
-  associateSurveyHandler,
-);
-router.delete(
-  "/surveys/:surveyId/associate/:associateSurveyId",
-  checkUserOwnsSurvey,
-  checkUserOwnsAssociateSurvey,
-  dissociateSurveyHandler,
-);
+router.use("/surveys/:surveyId/associate", checkUserOwnsSurvey, associateSurveyRoutes);
+router.use("/surveys/:surveyId/questionnaire", checkUserOwnsSurvey, questionnaireRoutes);
+
 router.delete("/surveys/:surveyId", checkUserOwnsSurvey, deleteSurveyHandler);
 
 router.param("surveyId", checkSurveyExists);

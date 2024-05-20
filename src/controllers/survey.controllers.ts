@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { Rez, ServiceResponse } from "@neoncoder/service-response";
 import { SurveyService } from "../services/survey.service";
-import { Prisma, Survey } from "@prisma/client";
+import { Prisma, Survey, SurveyType } from "@prisma/client";
 import { isNotEmpty } from "@neoncoder/validator-utils";
 
 export const getSurveysHandler = async (req: Request, res: Response) => {
@@ -68,7 +68,16 @@ export const createSurveyHandler = async (req: Request, res: Response) => {
   if (!surveyData.clientUserId) surveyData.clientUserId = userId;
   const surveyService = new SurveyService({});
   const { result } = await surveyService.createSurvey({ surveyData });
-  const { associatedSurveys } = surveyData;
+  const { associatedSurveys, surveyTypes } = surveyData;
+  if (surveyTypes && Array.isArray(surveyTypes) && !result?.error) {
+    const typeFilters = { page: 1, limit: 20, filters: { surveyType: { in: [...surveyTypes, "SELF"] } } };
+    const { data } = (await surveyService.utilsService.getTypes(typeFilters)).result!;
+    data.surveyTypes.forEach(async (type: SurveyType) => {
+      await surveyService.utilsService.addSurveyType({ surveyType: type.surveyType });
+    });
+  } else {
+    await surveyService.utilsService.addSurveyType({ surveyType: "SELF" });
+  }
   if (associatedSurveys && Array.isArray(associatedSurveys) && !result?.error) {
     const notSelf = [...new Set(associatedSurveys.filter((x: string) => surveyService.survey?.surveyId !== x))];
     const filters = {
@@ -90,7 +99,19 @@ export const createSurveyHandler = async (req: Request, res: Response) => {
 };
 
 export const updateSurveyHandler = async (req: Request, res: Response) => {
-  const result = (await new SurveyService({ survey: res.locals.survey }).updateSurvey(req.body)).result;
+  const { surveyTypes, ...rest } = req.body;
+  const { survey } = res.locals;
+  const surveyService = new SurveyService({ survey });
+  const data: Record<string, unknown> = { ...rest };
+  if (surveyTypes && Array.isArray(surveyTypes)) {
+    const typeFilters = { page: 1, limit: 20, filters: { surveyType: { in: [...surveyTypes, "SELF"] } } };
+    const { surveyTypes: types } = (await surveyService.utilsService.getTypes(typeFilters)).result!.data;
+    // data.surveyTypes = types.map((x: SurveyType) => ({ surveyType: x.surveyType, surveyId: survey?.surveyId }));
+    const updatedSurveyTypes: string[] = types.map((x: SurveyType) => x.surveyType);
+    await surveyService.utilsService.removeAllSurveyTypes({});
+    await surveyService.utilsService.batchAddSurveyType({ surveyTypes: updatedSurveyTypes });
+  }
+  const result = (await surveyService.updateSurvey(data)).result;
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
 };

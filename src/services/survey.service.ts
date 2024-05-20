@@ -4,6 +4,7 @@ import { PostgresDBService } from "./common.service";
 import { isValidDate } from "@neoncoder/validator-utils";
 import { AssociatedSurveyService } from "./associatedSurvey.service";
 import { AssociatedSurveyFilters, SurveyFilters, SurveyFiltersPaginated } from "./survey.custom.types";
+import { SurveyUtilsService } from "./surveyUtils.service";
 
 export class SurveyService extends PostgresDBService {
   survey: (Partial<Survey> & { associatedSurveys?: Survey[]; isAssociatedWithSurveys?: Survey[] }) | null;
@@ -12,10 +13,13 @@ export class SurveyService extends PostgresDBService {
 
   associationService: AssociatedSurveyService;
 
+  utilsService: SurveyUtilsService;
+
   constructor({ survey, prismaInstance }: { survey?: Survey | null; prismaInstance?: PrismaClient }) {
     super(prismaInstance);
     this.survey = survey ?? null;
     this.associationService = new AssociatedSurveyService({ surveyId: survey ? survey.surveyId : undefined });
+    this.utilsService = new SurveyUtilsService({ surveyId: survey ? survey.surveyId : undefined });
     this.fields = [
       "surveyId",
       "name",
@@ -43,13 +47,13 @@ export class SurveyService extends PostgresDBService {
           skip: (page - 1) * limit,
           where: { ...filters },
           orderBy,
-          include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+          include: {
+            _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } },
+          },
         }),
         this.prisma.survey.count({ where: { ...filters } }),
       ]);
-      const pages = Math.ceil(total / limit) || 1;
-      const prev = pages > 1 && page <= pages && page > 0 ? page - 1 : null;
-      const next = pages > 1 && page < pages && page > 0 ? page + 1 : null;
+      const { pages, prev, next } = this.paginate(total, limit, page);
       const data = { surveys, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
@@ -58,11 +62,16 @@ export class SurveyService extends PostgresDBService {
     return this;
   }
 
+  async setSurveyId() {
+    this.utilsService.surveyId = this.survey?.surveyId;
+    this.associationService.surveyId = this.survey?.surveyId;
+  }
+
   async createSurvey({ surveyData }: { surveyData: Prisma.SurveyCreateInput }) {
     const data = this.sanitize(this.fields, surveyData);
     try {
       this.survey = await this.prisma.survey.create({ data });
-      if (this.survey.surveyId) this.associationService.setSurveyId(this.survey.surveyId);
+      if (this.survey.surveyId) this.setSurveyId();
       this.result = statusMap.get(201)!({ data: this.survey, message: "Survey created" });
     } catch (error: any) {
       this.formatError(error);
@@ -74,7 +83,7 @@ export class SurveyService extends PostgresDBService {
     try {
       this.survey = await this.prisma.survey.findUnique({
         where: { surveyId },
-        include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+        include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } } },
       });
       if (this.survey?.surveyId) this.associationService.setSurveyId(this.survey.surveyId);
       this.result = this.survey
@@ -89,7 +98,11 @@ export class SurveyService extends PostgresDBService {
   async updateSurvey(updateData: any, surveyId = this.survey?.surveyId) {
     const data = this.sanitize(this.fields, updateData);
     try {
-      this.survey = await this.prisma.survey.update({ where: { surveyId }, data });
+      this.survey = await this.prisma.survey.update({
+        where: { surveyId },
+        data,
+        include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } } },
+      });
       this.associationService.setSurveyId(surveyId!);
       this.result = statusMap.get(200)!({ data: this.survey, message: "Survey updated" });
     } catch (error: any) {
@@ -124,7 +137,7 @@ export class SurveyService extends PostgresDBService {
         where: { surveyId },
       });
       this.survey = null;
-      this.result = statusMap.get(201)!({ data: deletedSurvey, message: `Survey deleted` });
+      this.result = statusMap.get(200)!({ data: deletedSurvey, message: `Survey deleted` });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -137,7 +150,9 @@ export class SurveyService extends PostgresDBService {
         this.prisma.survey.findMany({
           where: { ...filters },
           orderBy,
-          include: { _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true } } },
+          include: {
+            _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } },
+          },
         }),
         this.prisma.survey.count({ where: { ...filters } }),
       ]);

@@ -1,0 +1,38 @@
+[
+  {
+    "name"       : "Likert Type Scale",
+    "description": "Respondents indicate their level of agreement or disagreement with a  statement using a scale (e.g., strongly agree, agree, neutral, disagree,  strongly disagree).",
+    "responseType" : "LIKERT",
+    "responseTypeId" : "LIKERT"
+  },
+  {
+    "name"       : "Comments (Open Ended)",
+    "description": "Respondents provide their own answer or explanation in their own words.",
+    "responseType" : "COMMENT",
+    "responseTypeId" : "COMMENT"
+  },
+  {
+    "name"       : "Word Cloud",
+    "description": "Select this option to incorporate a word cloud feature, allowing participants to provide responses in the form of text.",
+    "responseType" : "WORD_CLOUD",
+    "responseTypeId" : "WORD_CLOUD"
+  },
+  {
+    "name": "Multiple Choice",
+    "description": "Respondents select from a series of options, selecting one or more choices, where one or more choices may be correct.",
+    "responseType": "MULTIPLE_CHOICE",
+    "responseTypeId": "MULTIPLE_CHOICE"
+  },
+  {
+    "name": "Single Choice",
+    "description": "Respondents select from a series of options, selecting a single choice, where only one choice may be correct.",
+    "responseType": "SINGLE_CHOICE",
+    "responseTypeId": "SINGLE_CHOICE"
+  },
+  {
+    "name": "Rating",
+    "description": "Respondents select a rating from a minimum to maximum value.",
+    "responseType": "RATING",
+    "responseTypeId": "RATING"
+  }
+]

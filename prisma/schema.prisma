@@ -13,18 +13,39 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SurveyType {
+  name            String
+  description     String
+  surveyType      String            @id
+  createdByUserId String?
+  questions       QuestionVersion[] @relation("SurveyTypeHasQuestions")
+  surveys         SurveyHasType[]
+
+  @@unique(name: "surveyTypeId", [createdByUserId, surveyType])
+}
+
+model SurveyHasType {
+  surveyType     String
+  surveyTypeData SurveyType @relation(fields: [surveyType], references: [surveyType], onDelete: Cascade)
+  surveyId       String
+  survey         Survey     @relation(fields: [surveyId], references: [surveyId], onDelete: Cascade)
+
+  @@id(name: "surveyHasTypeId", [surveyType, surveyId])
+}
+
 model Survey {
   surveyId                          String             @id @default(uuid())
   name                              String?
   shortDesc                         String?
   creatorUserId                     String?
   clientUserId                      String?
+  useClientBrandTheme               Boolean?           @default(false)
   hasRequestFeedbackEnabled         Boolean?           @default(false)
-  hasProviderFeedbackEnabled         Boolean?           @default(false)
+  hasProviderFeedbackEnabled        Boolean?           @default(false)
   canViewParticipants               Boolean?           @default(false)
   feedbackGiverSurveyThreshold      Int?               @default(3)
   responsePerQuestionnaireThreshold Int?               @default(3)
-  requiresSelfAssessment            Boolean?           @default(false)
+  requiresSelfAssessment            Boolean?           @default(true)
   reportType                        ReportType?        @default(INDIVIDUAL)
   associatedSurveys                 AssociatedSurvey[] @relation("HasAssociatedSurveys")
   isAssociatedWithSurveys           AssociatedSurvey[] @relation("IsAssociatedWithSurvey")
@@ -33,6 +54,7 @@ model Survey {
   closingDate                       DateTime?
   created                           DateTime           @default(now())
   updated                           DateTime           @updatedAt
+  surveyTypes                       SurveyHasType[]
 }
 
 enum ReportType {
@@ -48,4 +70,101 @@ model AssociatedSurvey {
   created            DateTime @default(now())
 
   @@id([surveyId, associatedSurveyId])
+}
+
+model Section {
+  sectionId       String         @id @default(uuid())
+  name            String?
+  description     String?
+  order           Int            @default(1)
+  questions       Question[]     @relation("sectionHasQuestions")
+  Questionnaire   Questionnaire? @relation("QuestionnaireHasSections", fields: [questionnaireId], references: [questionnaireId], onDelete: Cascade)
+  questionnaireId String
+}
+
+model Questionnaire {
+  questionnaireId String     @id @default(uuid())
+  name            String?
+  section         Section[]  @relation("QuestionnaireHasSections")
+  questions       Question[] @relation("QuestionnaireHasQuestions")
+}
+
+model Question {
+  questionId            String                 @id @default(uuid())
+  description           String?
+  section               Section?               @relation("sectionHasQuestions", fields: [sectionId], references: [sectionId])
+  sectionId             String
+  order                 Int                    @default(1)
+  questionnaireId       String
+  questionnaire         Questionnaire?         @relation("QuestionnaireHasQuestions", fields: [questionnaireId], references: [questionnaireId])
+  responseTypeId        String
+  responseType          ResponseType?          @relation("QuestionRequiresResponseType", fields: [responseTypeId], references: [responseTypeId])
+  questionChoiceOptions QuestionChoiceOption[] @relation("QuestionHasChoiceOptions")
+  versions              QuestionVersion[]      @relation("QuestionHasVersion")
+  // questionWordCloud     QuestionWordCloud?      @relation("QuestionHasWordCloud")
+}
+
+model QuestionChoiceOption {
+  questionId String
+  question   Question? @relation("QuestionHasChoiceOptions", fields: [questionId], references: [questionId])
+  name       String?
+  value      Int
+  correct    Boolean   @default(false)
+
+  @@id([questionId, value])
+}
+
+// model QuestionWordCloud {
+//   questionId String
+//   words      String[] @default([])
+//   question   Question @relation("QuestionHasWordCloud", fields: [questionId], references: [questionId])
+
+//   @@id([questionId])
+// }
+
+model QuestionVersion {
+  surveyType     String
+  surveyTypeData SurveyType? @relation("SurveyTypeHasQuestions", fields: [surveyType], references: [surveyType])
+  questionId     String
+  question       Question?   @relation("QuestionHasVersion", fields: [questionId], references: [questionId])
+  text           String?
+
+  @@id([questionId, surveyType])
+}
+
+model ResponseType {
+  id                    Int            @unique @default(autoincrement())
+  name                  String?
+  description           String?
+  // answerType   AnswerType
+  // key          String
+  createdByUserId       String?
+  responseType          String?
+  responseTypeId        String         @id @default(uuid())
+  questions             Question[]     @relation("QuestionRequiresResponseType")
+  responseScaleOptions  ScaleOption[]  @relation("ResponseTypeScaleOptions")
+  responseRatingOptions RatingOption[] @relation("ResponseTypeRatingOptions")
+  // responseChoiceOptions ChoiceOptions[] @relation("ResponseTypeChoiceOptions")
+
+  // wordCloud             WordCloud
+  // valueType  ValueType
+  @@unique(name: "customResponseTypeId", [createdByUserId, responseTypeId])
+}
+
+model ScaleOption {
+  name           String?
+  value          Int
+  responseTypeId String
+  responseType   ResponseType? @relation("ResponseTypeScaleOptions", fields: [responseTypeId], references: [responseTypeId])
+
+  @@unique(name: "scaleOptionId", [responseTypeId, value])
+}
+
+model RatingOption {
+  name           String?
+  value          Int
+  responseTypeId String
+  responseType   ResponseType? @relation("ResponseTypeRatingOptions", fields: [responseTypeId], references: [responseTypeId])
+
+  @@unique(name: "scaleOptionId", [responseTypeId, value])
 }
