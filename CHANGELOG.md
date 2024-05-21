@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.6](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.5...v0.0.6) (2024-05-21)
+
+
+### 📝 Documentation
+
+* updated readme with how to ([3776818](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/37768189f3bc78271674fa911f91442ce67967b8))
+
+
+### ✨Features
+
+* crud questionnaire and sections ([9c3643d](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/9c3643d3b3dd118e32dba33fe3ce842f95010d28))
+* response types templates ([8a9d229](https://gitlab.com/informanus-backend-apps/informanus-client-service/commits/8a9d229c3677bc05c0aeb96cebdb0e4aed6e6643))
+
 ### [0.0.5](https://gitlab.com/informanus-backend-apps/informanus-client-service/compare/v0.0.4...v0.0.5) (2024-05-14)
 
 
