@@ -14,12 +14,14 @@ import {
 } from "../controllers/survey.controllers";
 import { questionnaireRoutes } from "./questionnaireRoutes";
 import { associateSurveyRoutes } from "./associateSurveyRoutes";
+import { settingsRoutes } from "./settingsRoutes";
 
 const router = Router({ mergeParams: true });
 
 router.get("/", defaultHandler);
 router.get("/surveys", validate(searchSurveysSchema, "Survey Filters"), getSurveysHandler);
 router.get("/search", validate(searchSurveysSchema, "Survey Search"), searchSurveysHandler);
+router.use("/settings", settingsRoutes);
 router.get("/surveys/:surveyId", getSurveyDetailsHandler);
 router.post(
   "/surveys",

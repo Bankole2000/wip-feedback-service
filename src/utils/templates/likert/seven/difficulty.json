@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Very Easy",
+    "value": 1
+  },
+  {
+    "name": "Easy",
+    "value": 2
+  },
+  {
+    "name": "Somewhat Easy",
+    "value": 3
+  },
+  {
+    "name": "Neutral",
+    "value": 4
+  },
+  {
+    "name": "Somewhat Hard",
+    "value": 5
+  },
+  {
+    "name": "Hard",
+    "value": 6
+  },
+  {
+    "name": "Very Hard",
+    "value": 7
+  }
+]

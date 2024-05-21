@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Unconcerned",
+    "value": 1
+  },
+  {
+    "name": "Unconcerned",
+    "value": 2
+  },
+  {
+    "name": "Neutral",
+    "value": 3
+  },
+  {
+    "name": "Concerned",
+    "value": 4
+  },
+  {
+    "name": "Very Concerned",
+    "value": 5
+  }
+]

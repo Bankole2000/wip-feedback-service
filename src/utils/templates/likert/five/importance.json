@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Unimportant",
+    "value": 1
+  },
+  {
+    "name": "Unimportant",
+    "value": 2
+  },
+  {
+    "name": "Neutral",
+    "value": 3
+  },
+  {
+    "name": "Important",
+    "value": 4
+  },
+  {
+    "name": "Very Important",
+    "value": 5
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Poor",
+    "value": 1
+  },
+  {
+    "name": "Poor",
+    "value": 2
+  },
+  {
+    "name": "Acceptable",
+    "value": 3
+  },
+  {
+    "name": "Good",
+    "value": 4
+  },
+  {
+    "name": "Very Good",
+    "value": 5
+  }
+]

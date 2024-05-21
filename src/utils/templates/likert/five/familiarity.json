@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Unfamiliar",
+    "value": 1
+  },
+  {
+    "name": "Unfamiliar",
+    "value": 2
+  },
+  {
+    "name": "Somewhat Familiar",
+    "value": 3
+  },
+  {
+    "name": "Familiar",
+    "value": 4
+  },
+  {
+    "name": "Very Familiar",
+    "value": 5
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Never",
+    "value": 1
+  },
+  {
+    "name": "Rarely",
+    "value": 2
+  },
+  {
+    "name": "Sometimes",
+    "value": 3
+  },
+  {
+    "name": "Often",
+    "value": 4
+  },
+  {
+    "name": "Always",
+    "value": 5
+  }
+]

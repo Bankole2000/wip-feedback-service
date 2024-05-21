@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Very Unaware",
+    "value": 1
+  },
+  {
+    "name": "Unaware",
+    "value": 2
+  },
+  {
+    "name": "Somewhat Unaware",
+    "value": 3
+  },
+  {
+    "name": "Neutral",
+    "value": 4
+  },
+  {
+    "name": "Somewhat Aware",
+    "value": 5
+  },
+  {
+    "name": "Aware",
+    "value": 6
+  },
+  {
+    "name": "Very Aware",
+    "value": 7
+  }
+]

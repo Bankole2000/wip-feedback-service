@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Unlikely",
+    "value": 1
+  },
+  {
+    "name": "Unlikely",
+    "value": 2
+  },
+  {
+    "name": "Neutral",
+    "value": 3
+  },
+  {
+    "name": "Likely",
+    "value": 4
+  },
+  {
+    "name": "Very Likely",
+    "value": 5
+  }
+]

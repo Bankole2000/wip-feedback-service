@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Very Dissatisfied",
+    "value": 1
+  },
+  {
+    "name": "Dissatisfied",
+    "value": 2
+  },
+  {
+    "name": "Neutral",
+    "value": 3
+  },
+  {
+    "name": "Satisfied",
+    "value": 4
+  },
+  {
+    "name": "Very Satisfied",
+    "value": 5
+  }
+]

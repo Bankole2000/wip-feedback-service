@@ -27,7 +27,7 @@ router.get("/:surveyId/associate", getAssociatedSurveysHandler);
 router.patch("/:surveyId/associate/:associateSurveyId", associateSurveyHandler); // Associate Survey
 router.delete("/:surveyId/associate/:associateSurveyId", dissociateSurveyHandler); // Dissociate Survey
 
-export { router as adminRoutes };
-
 router.param("surveyId", checkSurveyExists);
 router.param("associateSurveyId", checkAssociateSurveyExists);
+
+export { router as adminRoutes };

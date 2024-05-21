@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Never",
+    "value": 1
+  },
+  {
+    "name": "Rarely (about 10% of the time)",
+    "value": 2
+  },
+  {
+    "name": "Rarely (about 30% of the time)",
+    "value": 3
+  },
+  {
+    "name": "Sometimes (about 50% of the time)",
+    "value": 4
+  },
+  {
+    "name": "Frequently (about 70% of the time)",
+    "value": 5
+  },
+  {
+    "name": "Usually (about 90% of the time)",
+    "value": 6
+  },
+  {
+    "name": "Everytime",
+    "value": 7
+  }
+]

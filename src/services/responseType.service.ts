@@ -24,12 +24,34 @@ export class ResponseTypeService extends PostgresDBService {
   async getResponseTypes({ page = 1, limit = 20, filters, orderBy }: ResponseTypeFiltersPaginated) {
     try {
       const [responseTypes, total] = await this.prisma.$transaction([
-        this.prisma.responseType.findMany({ take: limit, skip: (page - 1) * limit, where: { ...filters }, orderBy }),
+        this.prisma.responseType.findMany({
+          take: limit,
+          skip: (page - 1) * limit,
+          where: { ...filters },
+          include: { _count: { select: { responseScaleOptions: true, responseRatingOptions: true, questions: true } } },
+          orderBy,
+        }),
         this.prisma.responseType.count({ where: { ...filters } }),
       ]);
       const { pages, next, prev } = this.paginate(total, limit, page);
       const data = { responseTypes, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
+    } catch (error: any) {
+      this.formatError(error);
+    }
+    return this;
+  }
+
+  async getResponseTypeById({ id, includes }: { id: number; includes?: Prisma.ResponseTypeInclude }) {
+    let include: Prisma.ResponseTypeInclude = {
+      _count: { select: { questions: true, responseRatingOptions: true, responseScaleOptions: true } },
+    };
+    if (includes) include = { ...includes, ...include };
+    try {
+      this.responseType = await this.prisma.responseType.findUnique({ where: { id }, include });
+      this.result = this.responseType
+        ? statusMap.get(200)!({ data: this.responseType, message: "Response Type" })
+        : statusMap.get(404)!({ data: this.responseType, message: "Response Type not found" });
     } catch (error: any) {
       this.formatError(error);
     }
@@ -45,7 +67,7 @@ export class ResponseTypeService extends PostgresDBService {
   }) {
     const data: Prisma.ResponseTypeCreateInput = this.sanitize(this.responseTypeFields, responseTypeData);
     try {
-      this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx) => {
         const newResponseType = await tx.responseType.create({ data });
         if (!isSystem) {
           const { id, responseType } = newResponseType;
