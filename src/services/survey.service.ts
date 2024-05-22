@@ -39,7 +39,13 @@ export class SurveyService extends PostgresDBService {
     ];
   }
 
-  async getSurveys({ page = 1, limit = 20, filters = {}, orderBy = { updated: "desc" } }: SurveyFiltersPaginated) {
+  async getSurveys({
+    page = 1,
+    limit = 20,
+    filters = {},
+    orderBy = { updated: "desc" },
+    includes,
+  }: SurveyFiltersPaginated) {
     try {
       const [surveys, total] = await this.prisma.$transaction([
         this.prisma.survey.findMany({
@@ -54,7 +60,7 @@ export class SurveyService extends PostgresDBService {
         this.prisma.survey.count({ where: { ...filters } }),
       ]);
       const { pages, prev, next } = this.paginate(total, limit, page);
-      const data = { surveys, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
+      const data = { surveys, total, pages, prev, next, meta: { filters, orderBy, includes, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
@@ -144,15 +150,13 @@ export class SurveyService extends PostgresDBService {
     return this;
   }
 
-  async getAllSurveys({ filters, orderBy = { updated: "desc" } }: SurveyFilters) {
+  async getAllSurveys({ filters, orderBy = { updated: "desc" }, includes }: SurveyFilters) {
     try {
       const [surveys, count] = await this.prisma.$transaction([
         this.prisma.survey.findMany({
           where: { ...filters },
           orderBy,
-          include: {
-            _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } },
-          },
+          include: this.getIncludes(includes),
         }),
         this.prisma.survey.count({ where: { ...filters } }),
       ]);
@@ -187,5 +191,12 @@ export class SurveyService extends PostgresDBService {
       OR.push({ [key]: query[key] });
     }
     return OR;
+  }
+
+  getIncludes(includes?: Prisma.SurveyInclude) {
+    const countInclude: Prisma.SurveyInclude = {
+      _count: { select: { associatedSurveys: true, isAssociatedWithSurveys: true, surveyTypes: true } },
+    };
+    return { ...countInclude, ...includes };
   }
 }

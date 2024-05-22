@@ -7,6 +7,7 @@ export type SurveyWithRelations =
 export type SurveyFilters = {
   filters?: Prisma.SurveyWhereInput;
   orderBy?: Prisma.SurveyOrderByWithRelationInput | Prisma.SurveyOrderByWithRelationInput[];
+  includes?: Prisma.SurveyInclude;
 };
 
 export type SurveyFiltersPaginated = Partial<SurveyFilters> & { page: number; limit: number };
@@ -20,6 +21,7 @@ export type AssociatedSurveyFilters = {
 export type SurveyTypeFilters = {
   filters?: Prisma.SurveyTypeWhereInput;
   orderBy?: Prisma.SurveyTypeOrderByWithRelationInput | Prisma.SurveyTypeOrderByWithRelationInput[];
+  includes?: Prisma.SurveyTypeInclude;
 };
 
 export type SurveyTypeFiltersPaginated = Partial<SurveyTypeFilters> & { page?: number; limit?: number };
@@ -27,6 +29,7 @@ export type SurveyTypeFiltersPaginated = Partial<SurveyTypeFilters> & { page?: n
 export type SectionFilters = {
   filters?: Prisma.SectionWhereInput;
   orderBy?: Prisma.SectionOrderByWithRelationInput | Prisma.SectionOrderByWithRelationInput[];
+  includes?: Prisma.SectionInclude;
 };
 
 export type SectionFiltersPaginated = Partial<SectionFilters> & { page?: number; limit?: number };
@@ -34,6 +37,7 @@ export type SectionFiltersPaginated = Partial<SectionFilters> & { page?: number;
 export type QuestionnaireFilters = {
   filters?: Prisma.QuestionnaireWhereInput;
   orderBy?: Prisma.QuestionnaireOrderByWithRelationInput | Prisma.QuestionnaireOrderByWithRelationInput[];
+  includes?: Prisma.QuestionnaireInclude;
 };
 
 export type QuestionnaireFiltersPaginated = Partial<QuestionnaireFilters> & { page?: number; limit?: number };
@@ -41,6 +45,7 @@ export type QuestionnaireFiltersPaginated = Partial<QuestionnaireFilters> & { pa
 export type ResponseTypeFilters = {
   filters?: Prisma.ResponseTypeWhereInput;
   orderBy?: Prisma.ResponseTypeOrderByWithRelationInput | Prisma.ResponseTypeOrderByWithRelationInput[];
+  includes?: Prisma.ResponseTypeInclude;
 };
 
 export type ResponseTypeFiltersPaginated = Partial<ResponseTypeFilters> & { page?: number; limit?: number };

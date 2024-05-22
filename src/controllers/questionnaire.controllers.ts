@@ -14,7 +14,7 @@ export const getQuestionnaireHandler = async (req: Request, res: Response) => {
       if (i === "section" || i === "questions") include[i] = { orderBy: { order: "asc" } };
     });
   }
-  console.log({ queryInclude });
+  console.log({ queryInclude, include });
   const { result } = await new QuestionnaireService({ surveyId: survey.surveyId }).getQuestionnaireById({ include });
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
   return res.status(sr.statusCode).send(sr);
@@ -74,5 +74,20 @@ export const updateSectionHandler = async (req: Request, res: Response) => {
     sectionId: section.sectionId,
   });
   const sr: ServiceResponse = Rez[result!.statusType]({ ...result });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const getQuestionnaireResponseTypesHandler = async (_: Request, res: Response) => {
+  const sr: ServiceResponse = Rez.OK({ message: "Get questionnaire response types - Not yet implemented" });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const addQuestionnaireResponseTypeHandler = async (_: Request, res: Response) => {
+  const sr: ServiceResponse = Rez.OK({ message: "Add questionnaire response type - Not yet implemented" });
+  return res.status(sr.statusCode).send(sr);
+};
+
+export const removeQuestionnaireResponseTypeHandler = async (_: Request, res: Response) => {
+  const sr: ServiceResponse = Rez.OK({ message: "Remove questionnaire response type - Not yet implemented" });
   return res.status(sr.statusCode).send(sr);
 };

@@ -25,14 +25,20 @@ export class SectionService extends PostgresDBService {
     this.questionUtils = new QuestionUtilsService();
   }
 
-  async getSections({ page = 1, limit = 20, filters, orderBy }: SectionFiltersPaginated) {
+  async getSections({ page = 1, limit = 20, filters, orderBy, includes }: SectionFiltersPaginated) {
     try {
       const [sections, total] = await this.prisma.$transaction([
-        this.prisma.section.findMany({ take: limit, skip: (page - 1) * limit, where: { ...filters }, orderBy }),
+        this.prisma.section.findMany({
+          take: limit,
+          skip: (page - 1) * limit,
+          where: { ...filters },
+          orderBy,
+          include: this.getIncludes(includes),
+        }),
         this.prisma.section.count({ where: { ...filters } }),
       ]);
       const { pages, next, prev } = this.paginate(total, limit, page);
-      const data = { sections, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
+      const data = { sections, total, pages, prev, next, meta: { filters, orderBy, includes, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
@@ -40,9 +46,12 @@ export class SectionService extends PostgresDBService {
     return this;
   }
 
-  async getSectionDetails({ sectionId }: { sectionId: string }) {
+  async getSectionDetails({ sectionId, includes }: { sectionId: string; includes?: Prisma.SectionInclude }) {
     try {
-      this.section = await this.prisma.section.findUnique({ where: { sectionId } });
+      this.section = await this.prisma.section.findUnique({
+        where: { sectionId },
+        include: this.getIncludes(includes),
+      });
       this.result = this.section
         ? statusMap.get(200)!({ data: this.section, message: "Section details" })
         : statusMap.get(404)!({ data: this.section, message: "Section not found" });
@@ -57,7 +66,7 @@ export class SectionService extends PostgresDBService {
     if (!data.questionnaireId) data.questionnaireId = this.qid!;
     data.order = (await this.questionUtils.countSections({ filters: { questionnaireId: data.questionnaireId } })) + 1;
     try {
-      this.section = await this.prisma.section.create({ data });
+      this.section = await this.prisma.section.create({ data, include: this.getIncludes() });
       this.result = statusMap.get(201)!({ data: this.section, message: "Section created" });
     } catch (error: any) {
       this.formatError(error);
@@ -79,6 +88,7 @@ export class SectionService extends PostgresDBService {
       this.section = await this.prisma.section.update({
         where: { sectionId },
         data,
+        include: this.getIncludes(),
       });
       newPosition !== this.section.order && newPosition !== undefined
         ? await this.reorderSection({ newPosition, section: this.section })
@@ -114,7 +124,7 @@ export class SectionService extends PostgresDBService {
 
   async reorderSection({ newPosition, section = this.section! }: { newPosition: number; section?: Section }) {
     const { sectionId } = section;
-    const include: Prisma.SectionInclude = { _count: { select: { questions: true } } };
+    const include: Prisma.SectionInclude = this.getIncludes();
     const { filter, increment } = this.questionUtils.buildSectionReorderFilter({ newPosition, section });
     console.log({ filter, increment });
     try {
@@ -130,5 +140,10 @@ export class SectionService extends PostgresDBService {
       this.formatError(error);
     }
     return this;
+  }
+
+  getIncludes(includes?: Prisma.SectionInclude) {
+    const countInclude: Prisma.SectionInclude = { _count: { select: { questions: true } } };
+    return { ...countInclude, ...includes };
   }
 }

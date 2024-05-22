@@ -21,20 +21,20 @@ export class ResponseTypeService extends PostgresDBService {
     this.questionUtils = new QuestionUtilsService();
   }
 
-  async getResponseTypes({ page = 1, limit = 20, filters, orderBy }: ResponseTypeFiltersPaginated) {
+  async getResponseTypes({ page = 1, limit = 20, filters, orderBy, includes }: ResponseTypeFiltersPaginated) {
     try {
       const [responseTypes, total] = await this.prisma.$transaction([
         this.prisma.responseType.findMany({
           take: limit,
           skip: (page - 1) * limit,
           where: { ...filters },
-          include: { _count: { select: { responseScaleOptions: true, responseRatingOptions: true, questions: true } } },
+          include: this.getIncludes(includes),
           orderBy,
         }),
         this.prisma.responseType.count({ where: { ...filters } }),
       ]);
       const { pages, next, prev } = this.paginate(total, limit, page);
-      const data = { responseTypes, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
+      const data = { responseTypes, total, pages, prev, next, meta: { filters, orderBy, includes, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
@@ -43,12 +43,11 @@ export class ResponseTypeService extends PostgresDBService {
   }
 
   async getResponseTypeById({ id, includes }: { id: number; includes?: Prisma.ResponseTypeInclude }) {
-    let include: Prisma.ResponseTypeInclude = {
-      _count: { select: { questions: true, responseRatingOptions: true, responseScaleOptions: true } },
-    };
-    if (includes) include = { ...includes, ...include };
     try {
-      this.responseType = await this.prisma.responseType.findUnique({ where: { id }, include });
+      this.responseType = await this.prisma.responseType.findUnique({
+        where: { id },
+        include: this.getIncludes(includes),
+      });
       this.result = this.responseType
         ? statusMap.get(200)!({ data: this.responseType, message: "Response Type" })
         : statusMap.get(404)!({ data: this.responseType, message: "Response Type not found" });
@@ -68,11 +67,15 @@ export class ResponseTypeService extends PostgresDBService {
     const data: Prisma.ResponseTypeCreateInput = this.sanitize(this.responseTypeFields, responseTypeData);
     try {
       await this.prisma.$transaction(async (tx) => {
-        const newResponseType = await tx.responseType.create({ data });
+        const newResponseType = await tx.responseType.create({ data, include: this.getIncludes() });
         if (!isSystem) {
           const { id, responseType } = newResponseType;
           const responseTypeId = this.questionUtils.joinWithSymbol({ pre: responseType!, symbol: "_", post: id });
-          this.responseType = await tx.responseType.update({ where: { id }, data: { responseTypeId } });
+          this.responseType = await tx.responseType.update({
+            where: { id },
+            data: { responseTypeId },
+            include: this.getIncludes(),
+          });
         } else {
           this.responseType = newResponseType;
         }
@@ -103,7 +106,7 @@ export class ResponseTypeService extends PostgresDBService {
           data.responseTypeId = newResponseTypeId;
         }
       }
-      this.responseType = await this.prisma.responseType.update({ where: { id }, data });
+      this.responseType = await this.prisma.responseType.update({ where: { id }, data, include: this.getIncludes() });
       this.result = statusMap.get(200)!({ data: this.responseType, message: "Response Type updated" });
     } catch (error: any) {
       this.formatError(error);
@@ -133,5 +136,14 @@ export class ResponseTypeService extends PostgresDBService {
       this.formatError(error);
     }
     return this;
+  }
+
+  getIncludes(includes?: Prisma.ResponseTypeInclude) {
+    const countInclude: Prisma.ResponseTypeInclude = {
+      _count: {
+        select: { questions: true, questionnaires: true, responseRatingOptions: true, responseScaleOptions: true },
+      },
+    };
+    return { ...countInclude, ...includes };
   }
 }

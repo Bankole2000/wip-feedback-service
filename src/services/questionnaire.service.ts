@@ -24,13 +24,13 @@ export class QuestionnaireService extends PostgresDBService {
     try {
       const questionnaire = await this.prisma.questionnaire.findUnique({
         where: { questionnaireId: id },
-        include: include ?? { _count: { select: { section: true, questions: true } } },
+        include: this.getIncludes(include),
       });
       this.questionnaire =
         questionnaire ??
         (await this.prisma.questionnaire.create({
           data: { questionnaireId: id },
-          include: { _count: { select: { section: true, questions: true } } },
+          include: this.getIncludes(),
         }));
       this.result = statusMap.get(200)!({ data: this.questionnaire, message: "Questionnaire" });
     } catch (error: any) {
@@ -39,7 +39,7 @@ export class QuestionnaireService extends PostgresDBService {
     return this;
   }
 
-  async getQuestionnaires({ page = 1, limit = 20, filters, orderBy }: QuestionnaireFiltersPaginated) {
+  async getQuestionnaires({ page = 1, limit = 20, filters, orderBy, includes }: QuestionnaireFiltersPaginated) {
     try {
       const [questionnaires, total] = await this.prisma.$transaction([
         this.prisma.questionnaire.findMany({
@@ -47,12 +47,12 @@ export class QuestionnaireService extends PostgresDBService {
           skip: (page - 1) * limit,
           where: { ...filters },
           orderBy,
-          include: { _count: { select: { section: true, questions: true } } },
+          include: this.getIncludes(includes),
         }),
         this.prisma.questionnaire.count({ where: { ...filters } }),
       ]);
       const { pages, prev, next } = this.paginate(total, limit, page);
-      const data = { questionnaires, total, pages, prev, next, meta: { filters, orderBy, page, limit } };
+      const data = { questionnaires, total, pages, prev, next, meta: { filters, orderBy, includes, page, limit } };
       this.result = statusMap.get(200)!({ data, message: "OK" });
     } catch (error: any) {
       this.formatError(error);
@@ -66,7 +66,7 @@ export class QuestionnaireService extends PostgresDBService {
       const result = await this.prisma.questionnaire.update({
         where: { questionnaireId: id },
         data,
-        include: { _count: { select: { section: true, questions: true } } },
+        include: this.getIncludes(),
       });
       this.result = statusMap.get(201)!({ data: result, message: "Questionnaire updated" });
     } catch (error: any) {
@@ -84,5 +84,13 @@ export class QuestionnaireService extends PostgresDBService {
       this.formatError(error);
     }
     return this;
+  }
+
+  getIncludes(includes?: Prisma.QuestionnaireInclude) {
+    console.log({ includes });
+    const countInclude: Prisma.QuestionnaireInclude = {
+      _count: { select: { questions: true, section: true, questionnaireResponseTypes: true } },
+    };
+    return { ...countInclude, ...includes };
   }
 }

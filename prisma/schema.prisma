@@ -83,24 +83,36 @@ model Section {
 }
 
 model Questionnaire {
-  questionnaireId String     @id @default(uuid())
-  name            String?
-  section         Section[]  @relation("QuestionnaireHasSections")
-  questions       Question[] @relation("QuestionnaireHasQuestions")
+  questionnaireId            String                      @id @default(uuid())
+  name                       String?
+  section                    Section[]                   @relation("QuestionnaireHasSections")
+  questions                  Question[]                  @relation("QuestionnaireHasQuestions")
+  questionnaireResponseTypes QuestionnaireResponseType[] @relation("QuestionnaireResponseTypes")
+}
+
+model QuestionnaireResponseType {
+  questionnaireId String
+  questionnaire   Questionnaire @relation("QuestionnaireResponseTypes", fields: [questionnaireId], references: [questionnaireId])
+  responseTypeId  String
+  responseType    ResponseType  @relation("QuestionnaireResponseTypes", fields: [responseTypeId], references: [responseTypeId])
+  questions       Question[]    @relation("QuestionUsesQuestionnaireResponseType")
+
+  @@id([questionnaireId, responseTypeId])
 }
 
 model Question {
-  questionId            String                 @id @default(uuid())
-  description           String?
-  section               Section?               @relation("sectionHasQuestions", fields: [sectionId], references: [sectionId])
-  sectionId             String
-  order                 Int                    @default(1)
-  questionnaireId       String
-  questionnaire         Questionnaire?         @relation("QuestionnaireHasQuestions", fields: [questionnaireId], references: [questionnaireId])
-  responseTypeId        String
-  responseType          ResponseType?          @relation("QuestionRequiresResponseType", fields: [responseTypeId], references: [responseTypeId])
-  questionChoiceOptions QuestionChoiceOption[] @relation("QuestionHasChoiceOptions")
-  versions              QuestionVersion[]      @relation("QuestionHasVersion")
+  questionId                String                    @id @default(uuid())
+  description               String?
+  section                   Section?                  @relation("sectionHasQuestions", fields: [sectionId], references: [sectionId])
+  sectionId                 String
+  order                     Int                       @default(1)
+  questionnaireId           String
+  questionnaire             Questionnaire?            @relation("QuestionnaireHasQuestions", fields: [questionnaireId], references: [questionnaireId])
+  responseTypeId            String
+  responseType              ResponseType?             @relation("QuestionRequiresResponseType", fields: [responseTypeId], references: [responseTypeId])
+  questionnaireResponseType QuestionnaireResponseType @relation("QuestionUsesQuestionnaireResponseType", fields: [questionnaireId, responseTypeId], references: [questionnaireId, responseTypeId])
+  questionChoiceOptions     QuestionChoiceOption[]    @relation("QuestionHasChoiceOptions")
+  versions                  QuestionVersion[]         @relation("QuestionHasVersion")
   // questionWordCloud     QuestionWordCloud?      @relation("QuestionHasWordCloud")
 }
 
@@ -133,17 +145,18 @@ model QuestionVersion {
 }
 
 model ResponseType {
-  id                    Int            @unique @default(autoincrement())
+  id                    Int                         @unique @default(autoincrement())
   name                  String?
   description           String?
   // answerType   AnswerType
   // key          String
   createdByUserId       String?
   responseType          String?
-  responseTypeId        String         @id @default(uuid())
-  questions             Question[]     @relation("QuestionRequiresResponseType")
-  responseScaleOptions  ScaleOption[]  @relation("ResponseTypeScaleOptions")
-  responseRatingOptions RatingOption[] @relation("ResponseTypeRatingOptions")
+  responseTypeId        String                      @id @default(uuid())
+  questions             Question[]                  @relation("QuestionRequiresResponseType")
+  responseScaleOptions  ScaleOption[]               @relation("ResponseTypeScaleOptions")
+  responseRatingOptions RatingOption[]              @relation("ResponseTypeRatingOptions")
+  questionnaires        QuestionnaireResponseType[] @relation("QuestionnaireResponseTypes")
   // responseChoiceOptions ChoiceOptions[] @relation("ResponseTypeChoiceOptions")
 
   // wordCloud             WordCloud
